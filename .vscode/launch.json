@@ -7,8 +7,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Open programma.html",
-            "file": "/home/samuel/Projecten/nanonauten/programma.html"
+            "name": "Open index.html",
+            "file": "/home/samuel/Projecten/nanonauten/index.html"
         }
     ]
 }
