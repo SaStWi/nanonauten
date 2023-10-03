@@ -15,6 +15,7 @@
         const GROND_Y = 540;
         const NANONAUT_Y_VERSNELLING = 1;
         const SPATIEBALK_CODE = 32
+        const NANONAUT_SPRONG_SNELHEID = 20
 
         // INSTELLINGEN
         var canvas = document.createElement('canvas');
@@ -29,13 +30,17 @@
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
 
-        var nanonautX = 50;
+        var nanonautX = 50; 
         var nanonautY = 40;
 
         var nanonautYSnelheid = 0;
+        var nanonautIsInDeLucht = false
+    
+        var spatiebalkIsIngedrukt = false;
 
-        window.addEventListener('keydown', onkeydown);
-        window.addEventListener('keyup', onKeyup);
+
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
 
         window.addEventListener('load', start);
 
@@ -43,9 +48,7 @@
             window.requestAnimationFrame(hoofdLus);
         }
 
-        var spatiebalkIsIngedrukt = false;
 
-        
 
         // HOOFD-LUS
         function hoofdLus() {
@@ -56,20 +59,34 @@
 
         // SPELER HANDELINGEN
 
-        function onkeydown(event) {
+        function onKeyDown(event) {
             if (event.keyCode === SPATIEBALK_CODE) {
                 spatiebalkIsIngedrukt = true
             }
         }
 
+        function onKeyUp(event) {
+            if (event.keyCode === SPATIEBALK_CODE) {
+                spatiebalkIsIngedrukt = false
+            }
+        }
+
         // UPDATEN
         function update() {
+            if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht){
+                // Springen!
+                nanonautYSnelheid = -NANONAUT_SPRONG_SNELHEID
+                nanonautIsInDeLucht = true
+            }
+
+
             nanonautY = nanonautY + nanonautYSnelheid;
             nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
 
             if (nanonautY > (GROND_Y - NANONAUT_HOOGTE)) {
                 nanonautY = GROND_Y - NANONAUT_HOOGTE;
                 nanonautYSnelheid = 0;
+                nanonautIsInDeLucht = false
             }
 
         }
