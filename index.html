@@ -18,6 +18,8 @@
         const NANONAUT_SPRONG_SNELHEID = 20;
         const NANONAUT_X_SNELHEID = 5;
         const ACHTERGROND_BREEDTE = 1000;
+        const NANONAUT_NR_FRAMES_PER_RIJ = 5;
+        const NANONAUT_NR_ANIMATIEFRAMES = 7;
 
         // INSTELLINGEN
         var canvas = document.createElement('canvas');
@@ -27,18 +29,19 @@
         document.body.appendChild(canvas);
 
         var nanonautAfbeelding = new Image();
-        nanonautAfbeelding.src = 'nanonaut.png';
+        nanonautAfbeelding.src = 'animatedNanonaut.png';
 
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
 
-        var nanonautX = CANVAS_BREEDTE / 2; 
+        var nanonautX = CANVAS_BREEDTE / 2;
         var nanonautY = GROND_Y - NANONAUT_HOOGTE;
 
         var nanonautYSnelheid = 0;
         var nanonautIsInDeLucht = false
-    
+
         var spatiebalkIsIngedrukt = false;
+        var nanonautFrameNr = 0
 
         var cameraX = 0;
         var cameraY = 0;
@@ -76,18 +79,27 @@
         // UPDATEN
         function update() {
 
-            nanonautX = nanonautX + NANONAUT_X_SNELHEID;
 
-            if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht){
+            if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht) {
                 // Springen!
                 nanonautYSnelheid = -NANONAUT_SPRONG_SNELHEID
                 nanonautIsInDeLucht = true
             }
 
-            cameraX = nanonautX - 150;
 
+
+            nanonautX = nanonautX + NANONAUT_X_SNELHEID;
             nanonautY = nanonautY + nanonautYSnelheid;
             nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
+
+            // Update de animatie
+            nanonautFrameNr = nanonautFrameNr + 1;
+            if(nanonautFrameNr >= NANONAUT_NR_ANIMATIEFRAMES){
+                nanonautFrameNr = 0;
+            }
+
+            // Update de camera
+            cameraX = nanonautX - 150;
 
             if (nanonautY > (GROND_Y - NANONAUT_HOOGTE)) {
                 nanonautY = GROND_Y - NANONAUT_HOOGTE;
@@ -104,9 +116,9 @@
             c.fillRect(0, 0, CANVAS_BREEDTE, GROND_Y - 40);
 
             // Teken de achtergrond
-            var achtergrondX = -(cameraX % ACHTERGROND_BREEDTE); 
+            var achtergrondX = -(cameraX % ACHTERGROND_BREEDTE);
             c.drawImage(achtergrondafbeelding, achtergrondX, -210);
-            c.drawImage(achtergrondafbeelding, achtergrondX+ACHTERGROND_BREEDTE, -210);
+            c.drawImage(achtergrondafbeelding, achtergrondX + ACHTERGROND_BREEDTE, -210);
 
 
             // Teken de grond
@@ -114,7 +126,18 @@
             c.fillRect(0, GROND_Y - 40, CANVAS_BREEDTE, CANVAS_HOOGTE - GROND_Y + 40);
 
             // Teken de Nanonaut
-            c.drawImage(nanonautAfbeelding, nanonautX - cameraX, nanonautY - cameraY);
+            var nanonautSpriteSheetRij = Math.floor(nanonautFrameNr / NANONAUT_NR_FRAMES_PER_RIJ);
+            var nanonautSpriteSheetKolom = nanonautFrameNr % NANONAUT_NR_FRAMES_PER_RIJ;
+            var nanonautSpriteSheetX = nanonautSpriteSheetKolom * NANONAUT_BREEDTE;
+            var nanonautSpriteSheetY = nanonautSpriteSheetRij * NANONAUT_HOOGTE;
+            c.drawImage(
+                // de afbeelding
+                nanonautAfbeelding,
+                // de x en y coordinaten in de afbeelding, met de breedte en hoogte in de afbeelding
+                nanonautSpriteSheetX, nanonautSpriteSheetY, NANONAUT_BREEDTE, NANONAUT_HOOGTE,
+                // waar te tekenen op het canvas en met welke breedte en hoogte op de canvas
+                nanonautX - cameraX, nanonautY - cameraY, NANONAUT_BREEDTE, NANONAUT_HOOGTE
+            );
         }
     </script>
 </body>
