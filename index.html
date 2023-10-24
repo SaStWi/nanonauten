@@ -14,8 +14,10 @@
         const NANONAUT_HOOGTE = 229;
         const GROND_Y = 540;
         const NANONAUT_Y_VERSNELLING = 1;
-        const SPATIEBALK_CODE = 32
-        const NANONAUT_SPRONG_SNELHEID = 20
+        const SPATIEBALK_CODE = 32;
+        const NANONAUT_SPRONG_SNELHEID = 20;
+        const NANONAUT_X_SNELHEID = 5;
+        const ACHTERGROND_BREEDTE = 1000;
 
         // INSTELLINGEN
         var canvas = document.createElement('canvas');
@@ -30,14 +32,16 @@
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
 
-        var nanonautX = 50; 
-        var nanonautY = 40;
+        var nanonautX = CANVAS_BREEDTE / 2; 
+        var nanonautY = GROND_Y - NANONAUT_HOOGTE;
 
         var nanonautYSnelheid = 0;
         var nanonautIsInDeLucht = false
     
         var spatiebalkIsIngedrukt = false;
 
+        var cameraX = 0;
+        var cameraY = 0;
 
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('keyup', onKeyUp);
@@ -47,8 +51,6 @@
         function start() {
             window.requestAnimationFrame(hoofdLus);
         }
-
-
 
         // HOOFD-LUS
         function hoofdLus() {
@@ -73,12 +75,16 @@
 
         // UPDATEN
         function update() {
+
+            nanonautX = nanonautX + NANONAUT_X_SNELHEID;
+
             if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht){
                 // Springen!
                 nanonautYSnelheid = -NANONAUT_SPRONG_SNELHEID
                 nanonautIsInDeLucht = true
             }
 
+            cameraX = nanonautX - 150;
 
             nanonautY = nanonautY + nanonautYSnelheid;
             nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
@@ -98,14 +104,17 @@
             c.fillRect(0, 0, CANVAS_BREEDTE, GROND_Y - 40);
 
             // Teken de achtergrond
-            c.drawImage(achtergrondafbeelding, 0, -210);
+            var achtergrondX = -(cameraX % ACHTERGROND_BREEDTE); 
+            c.drawImage(achtergrondafbeelding, achtergrondX, -210);
+            c.drawImage(achtergrondafbeelding, achtergrondX+ACHTERGROND_BREEDTE, -210);
+
 
             // Teken de grond
             c.fillStyle = 'ForestGreen';
             c.fillRect(0, GROND_Y - 40, CANVAS_BREEDTE, CANVAS_HOOGTE - GROND_Y + 40);
 
             // Teken de Nanonaut
-            c.drawImage(nanonautAfbeelding, nanonautX, nanonautY);
+            c.drawImage(nanonautAfbeelding, nanonautX - cameraX, nanonautY - cameraY);
         }
     </script>
 </body>
