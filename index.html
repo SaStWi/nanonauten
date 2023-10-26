@@ -35,6 +35,11 @@
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
 
+        var bush1 = new Image();
+        bush1.src = 'bush1.png';
+        var bush2 = new Image();
+        bush2.src = 'bush2.png';
+
         var nanonautX = CANVAS_BREEDTE / 2;
         var nanonautY = GROND_Y - NANONAUT_HOOGTE;
 
@@ -49,6 +54,8 @@
 
         var spelFrameTeller = 0;
 
+        var bosjes = genereerBosjes();
+
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('keyup', onKeyUp);
 
@@ -56,6 +63,27 @@
 
         function start() {
             window.requestAnimationFrame(hoofdLus);
+        }
+
+        function genereerBosjes() {
+            var gegenereerdeBosjes = [];
+            var bosjeX = 0
+            while (bosjeX < (2 * CANVAS_BREEDTE)) {
+                var bosjeAfbeelding;
+                if (Math.random() >= 0.5) {
+                    bosjeAfbeelding = bush1;
+                } else {
+                    bosjeAfbeelding = bush2;
+                }
+
+                gegenereerdeBosjes.push({
+                    x: bosjeX,
+                    y: 80 + Math.random() * 20,
+                    image: bosjeAfbeelding
+                });
+                bosjeX += 150 + Math.random() * 200;
+            }
+            return gegenereerdeBosjes;
         }
 
         // HOOFD-LUS
@@ -111,9 +139,16 @@
                 nanonautIsInDeLucht = false
             }
 
+            // Update de bosjes
+            bosjes.forEach(bosje => {
+                if ((bosje.x - cameraX) < -CANVAS_BREEDTE) {
+                    bosje.x += (2 * CANVAS_BREEDTE) + 150;
+                }
+            })
+
         }
 
-        // TKEKENEN
+        // TKEKENEN       
         function draw() {
             // Teken de lucht
             c.fillStyle = 'LightSkyBlue';
@@ -128,6 +163,11 @@
             // Teken de grond
             c.fillStyle = 'ForestGreen';
             c.fillRect(0, GROND_Y - 40, CANVAS_BREEDTE, CANVAS_HOOGTE - GROND_Y + 40);
+
+            //teken een bosje
+            for (var i = 0; i < bosjes.length; i++) {
+                c.drawImage(bosjes[i].image, bosjes[i].x - cameraX, GROND_Y - bosjes[i].y - cameraY);
+            }
 
             // Teken de Nanonaut
             var nanonautSpriteSheetRij = Math.floor(nanonautFrameNr / NANONAUT_NR_FRAMES_PER_RIJ);
