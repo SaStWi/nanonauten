@@ -18,9 +18,13 @@
         const NANONAUT_SPRONG_SNELHEID = 20;
         const NANONAUT_X_SNELHEID = 5;
         const ACHTERGROND_BREEDTE = 1000;
-        const NANONAUT_NR_FRAMES_PER_RIJ = 5;
         const NANONAUT_NR_ANIMATIEFRAMES = 7;
         const NANONAUT_ANIMATIESENELHEID = 5;
+        const ROBOT_ANIMATIESNELHEID = 3;
+        const ROBOT_NR_ANIMATIEFRAMES = 9;
+        const ROBOT_X_SNELHEID = 4;
+        const ROBOT_BREEDTE = 141;
+        const ROBOT_HOOGTE = 139;
 
         // INSTELLINGEN
         var canvas = document.createElement('canvas');
@@ -31,6 +35,31 @@
 
         var nanonautAfbeelding = new Image();
         nanonautAfbeelding.src = 'animatedNanonaut.png';
+
+        var robotAfbeelding = new Image();
+        robotAfbeelding.src = 'animatedRobot.png';
+
+        var nanonautSpriteSheet = {
+            nrFramesPerRij: 5,
+            spriteWidth: NANONAUT_BREEDTE,
+            spriteHeight: NANONAUT_HOOGTE,
+            image: nanonautAfbeelding
+        }
+
+        var robotSpriteSheet = {
+            nrFramesPerRij: 3,
+            spriteWidth: ROBOT_BREEDTE,
+            spriteHeight: ROBOT_HOOGTE,
+            image: robotAfbeelding
+        }
+
+        var robots = [
+            {
+                x: 1000,
+                y: GROND_Y - ROBOT_HOOGTE,
+                frameNr: 0
+            }
+        ]
 
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
@@ -122,13 +151,25 @@
             nanonautY = nanonautY + nanonautYSnelheid;
             nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
 
-            // Update de animatie
+            // Update de nanonaut animatie
             if ((spelFrameTeller % NANONAUT_ANIMATIESENELHEID) === 0) {
                 nanonautFrameNr = nanonautFrameNr + 1;
                 if (nanonautFrameNr >= NANONAUT_NR_ANIMATIEFRAMES) {
                     nanonautFrameNr = 0;
                 }
             }
+
+            // Update de robots
+            robots.forEach(robot => {
+                if ((spelFrameTeller % ROBOT_ANIMATIESNELHEID) === 0) {
+                    robot.frameNr = robot.frameNr + 1;
+                    if(robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES){
+                        robot.frameNr = 0;
+                    }
+                }
+                robot.x = robot.x - ROBOT_X_SNELHEID;
+            })
+
 
             // Update de camera
             cameraX = nanonautX - 150;
@@ -164,25 +205,37 @@
             c.fillStyle = 'ForestGreen';
             c.fillRect(0, GROND_Y - 40, CANVAS_BREEDTE, CANVAS_HOOGTE - GROND_Y + 40);
 
-            //teken een bosje
-            for (var i = 0; i < bosjes.length; i++) {
-                c.drawImage(bosjes[i].image, bosjes[i].x - cameraX, GROND_Y - bosjes[i].y - cameraY);
-            }
+            // Teken de bosjes
+            bosjes.forEach(bosje => {
+                c.drawImage(bosje.image, bosje.x - cameraX, GROND_Y - bosje.y - cameraY);
+            });
+
+            // Teken de robots
+            robots.forEach(robot => {
+                tekenGeanimeerdeSprite(robot.x - cameraX, robot.y - cameraY, robot.frameNr, robotSpriteSheet);
+            })
 
             // Teken de Nanonaut
-            var nanonautSpriteSheetRij = Math.floor(nanonautFrameNr / NANONAUT_NR_FRAMES_PER_RIJ);
-            var nanonautSpriteSheetKolom = nanonautFrameNr % NANONAUT_NR_FRAMES_PER_RIJ;
-            var nanonautSpriteSheetX = nanonautSpriteSheetKolom * NANONAUT_BREEDTE;
-            var nanonautSpriteSheetY = nanonautSpriteSheetRij * NANONAUT_HOOGTE;
+            tekenGeanimeerdeSprite(nanonautX - cameraX, nanonautY - cameraY, nanonautFrameNr, nanonautSpriteSheet);
+        }
+
+
+        // teken een geanimeerde sprite
+        function tekenGeanimeerdeSprite(schermX, schermY, frameNr, spriteSheet) {
+            var spriteSheetRij = Math.floor(frameNr / spriteSheet.nrFramesPerRij);
+            var spriteSheetKolom = frameNr % spriteSheet.nrFramesPerRij;
+            var spriteSheetX = spriteSheetKolom * spriteSheet.spriteWidth;
+            var spriteSheetY = spriteSheetRij * spriteSheet.spriteHeight;
             c.drawImage(
                 // de afbeelding
-                nanonautAfbeelding,
+                spriteSheet.image,
                 // de x en y coordinaten in de afbeelding, met de breedte en hoogte in de afbeelding
-                nanonautSpriteSheetX, nanonautSpriteSheetY, NANONAUT_BREEDTE, NANONAUT_HOOGTE,
+                spriteSheetX, spriteSheetY, spriteSheet.spriteWidth, spriteSheet.spriteHeight,
                 // waar te tekenen op het canvas en met welke breedte en hoogte op de canvas
-                nanonautX - cameraX, nanonautY - cameraY, NANONAUT_BREEDTE, NANONAUT_HOOGTE
+                schermX, schermY, spriteSheet.spriteWidth, spriteSheet.spriteHeight
             );
         }
+
     </script>
 </body>
 
