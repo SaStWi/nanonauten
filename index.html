@@ -48,6 +48,12 @@
             spriteHeight: NANONAUT_HOOGTE,
             image: nanonautAfbeelding
         }
+        var nanonautBotsingsRechthoek = {
+            xOffset: 60,
+            yOffset: 20,
+            breedte: 50,
+            hoogte: 200
+        }
 
         var robotSpriteSheet = {
             nrFramesPerRij: 3,
@@ -55,9 +61,15 @@
             spriteHeight: ROBOT_HOOGTE,
             image: robotAfbeelding
         }
+        var robotBotsingsRechthoek = {
+            xOffset: 50,
+            yOffset: 20,
+            breedte: 50,
+            hoogte: 100
+        }
 
         var robots = []
-        
+
 
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
@@ -159,7 +171,7 @@
 
             // Update de robots
             updateRobots();
-         
+
 
             // Update de camera
             cameraX = nanonautX - 150;
@@ -184,7 +196,7 @@
             robots.forEach(robot => {
                 if ((spelFrameTeller % ROBOT_ANIMATIESNELHEID) === 0) {
                     robot.frameNr = robot.frameNr + 1;
-                    if(robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES){
+                    if (robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES) {
                         robot.frameNr = 0;
                     }
                 }
@@ -193,27 +205,60 @@
 
             // verwijder robots die uit beeld zijn
             var robotIndex = 0
-            while(robotIndex < robots.length){
-                if(robots[robotIndex].x < cameraX - ROBOT_BREEDTE){
+            while (robotIndex < robots.length) {
+                if (robots[robotIndex].x < cameraX - ROBOT_BREEDTE) {
                     robots.splice(robotIndex, 1);
-                }else{
+                } else {
                     robotIndex += 1;
                 }
             }
 
             // toevoegen robots
-            if(robots.length < MAX_ACTIEVE_ROBOTS) {
+            if (robots.length < MAX_ACTIEVE_ROBOTS) {
                 var laatsteRobotX = CANVAS_BREEDTE;
-                if(robots.length > 0){
-                    laatsteRobotX = robots[robots.length-1].x;
+                if (robots.length > 0) {
+                    laatsteRobotX = robots[robots.length - 1].x;
                 }
-                var nieuweRobotX = laatsteRobotX + MIN_AFSTAND_TUSSEN_ROBOTS + Math.random() *(MAX_AFSTAND_TUSSEN_ROBOTS-MIN_AFSTAND_TUSSEN_ROBOTS);
+                var nieuweRobotX = laatsteRobotX + MIN_AFSTAND_TUSSEN_ROBOTS + Math.random() * (MAX_AFSTAND_TUSSEN_ROBOTS - MIN_AFSTAND_TUSSEN_ROBOTS);
                 robots.push({
                     x: nieuweRobotX,
                     y: GROND_Y - ROBOT_HOOGTE,
                     frameNr: 0
                 })
             }
+
+            // botsing detecteren
+
+            function overlappenNanonautEnRobotOpEenAs(nanonautDichtbij, nanonautVer, robotDichtbij, robotVer) {
+                var nanonautOverlaptRandRobotDichtbij = (nanonautVer >= robotDichtbij) && (nanonautVer <= robotVer);
+                var nanonautOverlaptRandRobotVer = (nanonautDichtbij >= robotDichtbij) && (nanonautDichtbij <= robotVer);
+                var nanonautOverlaptRandRobotHelemaal = (nanonautDichtbij <= robotDichtbij) && (nanonautVer >= robotVer);
+                return nanonautOverlaptRandRobotDichtbij || nanonautOverlaptRandRobotVer || nanonautOverlaptRandRobotHelemaal;
+            }
+
+            function overlappenRobotEnNanonaut(
+                nanonautX, nanonautY, nanonautBreedte, nanonautHoogte,
+                robotX, robotY, robotBreedte, robotHoogte
+            ) {
+                var nanonautOverlaptRobotOpXAs = overlappenNanonautEnRobotOpEenAs(nanonautX, nanonautX + nanonautBreedte, robotX, robotX + robotBreedte);
+                var nanonautOverlaptRobotOpYAs = overlappenNanonautEnRobotOpEenAs(nanonautY, nanonautY + nanonautHoogte, robotY, robotY + robotHoogte);
+                return nanonautOverlaptRobotOpXAs && nanonautOverlaptRobotOpYAs;
+            }
+
+            robots.forEach(robot => {
+                if (overlappenRobotEnNanonaut(
+                    nanonautX + nanonautBotsingsRechthoek.xOffset,
+                    nanonautY + nanonautBotsingsRechthoek.yOffset,
+                    nanonautBotsingsRechthoek.breedte,
+                    nanonautBotsingsRechthoek.hoogte,
+                    robot.x + robotBotsingsRechthoek.xOffset,
+                    robot.y + robotBotsingsRechthoek.yOffset,
+                    robotBotsingsRechthoek.breedte,
+                    robotBotsingsRechthoek.hoogte
+                )) {
+                    console.log('AUW!')
+                }
+            })
 
         }
 
