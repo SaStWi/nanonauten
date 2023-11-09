@@ -25,6 +25,9 @@
         const ROBOT_X_SNELHEID = 4;
         const ROBOT_BREEDTE = 141;
         const ROBOT_HOOGTE = 139;
+        const MIN_AFSTAND_TUSSEN_ROBOTS = 400;
+        const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
+        const MAX_ACTIEVE_ROBOTS = 3
 
         // INSTELLINGEN
         var canvas = document.createElement('canvas');
@@ -53,13 +56,8 @@
             image: robotAfbeelding
         }
 
-        var robots = [
-            {
-                x: 1000,
-                y: GROND_Y - ROBOT_HOOGTE,
-                frameNr: 0
-            }
-        ]
+        var robots = []
+        
 
         var achtergrondafbeelding = new Image();
         achtergrondafbeelding.src = 'background.png';
@@ -160,16 +158,8 @@
             }
 
             // Update de robots
-            robots.forEach(robot => {
-                if ((spelFrameTeller % ROBOT_ANIMATIESNELHEID) === 0) {
-                    robot.frameNr = robot.frameNr + 1;
-                    if(robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES){
-                        robot.frameNr = 0;
-                    }
-                }
-                robot.x = robot.x - ROBOT_X_SNELHEID;
-            })
-
+            updateRobots();
+         
 
             // Update de camera
             cameraX = nanonautX - 150;
@@ -186,6 +176,44 @@
                     bosje.x += (2 * CANVAS_BREEDTE) + 150;
                 }
             })
+
+        }
+
+        function updateRobots() {
+
+            robots.forEach(robot => {
+                if ((spelFrameTeller % ROBOT_ANIMATIESNELHEID) === 0) {
+                    robot.frameNr = robot.frameNr + 1;
+                    if(robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES){
+                        robot.frameNr = 0;
+                    }
+                }
+                robot.x = robot.x - ROBOT_X_SNELHEID;
+            })
+
+            // verwijder robots die uit beeld zijn
+            var robotIndex = 0
+            while(robotIndex < robots.length){
+                if(robots[robotIndex].x < cameraX - ROBOT_BREEDTE){
+                    robots.splice(robotIndex, 1);
+                }else{
+                    robotIndex += 1;
+                }
+            }
+
+            // toevoegen robots
+            if(robots.length < MAX_ACTIEVE_ROBOTS) {
+                var laatsteRobotX = CANVAS_BREEDTE;
+                if(robots.length > 0){
+                    laatsteRobotX = robots[robots.length-1].x;
+                }
+                var nieuweRobotX = laatsteRobotX + MIN_AFSTAND_TUSSEN_ROBOTS + Math.random() *(MAX_AFSTAND_TUSSEN_ROBOTS-MIN_AFSTAND_TUSSEN_ROBOTS);
+                robots.push({
+                    x: nieuweRobotX,
+                    y: GROND_Y - ROBOT_HOOGTE,
+                    frameNr: 0
+                })
+            }
 
         }
 
@@ -235,7 +263,6 @@
                 schermX, schermY, spriteSheet.spriteWidth, spriteSheet.spriteHeight
             );
         }
-
     </script>
 </body>
 
