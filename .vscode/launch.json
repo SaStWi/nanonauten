@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Open index.html",
-            "file": "/home/samuel/Projecten/nanonauten/index.html"
+            "file": "index.html"
         }
     ]
 }

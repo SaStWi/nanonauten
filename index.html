@@ -27,9 +27,13 @@
         const ROBOT_HOOGTE = 139;
         const MIN_AFSTAND_TUSSEN_ROBOTS = 400;
         const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
-        const MAX_ACTIEVE_ROBOTS = 3
+        const MAX_ACTIEVE_ROBOTS = 3;
+
+        const fps = 60;
+        const msPerFrame = 1000 / fps;
 
         // INSTELLINGEN
+        var msPrev = window.performance.now();
         var canvas = document.createElement('canvas');
         var c = canvas.getContext('2d');
         canvas.width = CANVAS_BREEDTE;
@@ -127,6 +131,20 @@
 
         // HOOFD-LUS
         function hoofdLus() {
+            // check of updates uitgevoerd mogen worden compenserend voor snelle screenrates
+            const msNow = window.performance.now();
+            const msPassed = msNow - msPrev;
+            // als msPerFrame kleiner dan gewenste screenrate
+            if (msPassed < msPerFrame){
+                window.requestAnimationFrame(hoofdLus);
+                // voer de updates niet uit
+                return
+            }
+
+            // werk msPrev bij
+            const excessTime = msPassed % msPerFrame;
+            msPrev = msNow - excessTime
+
             update();
             draw();
             window.requestAnimationFrame(hoofdLus);
