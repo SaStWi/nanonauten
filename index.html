@@ -104,6 +104,8 @@
 
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('keyup', onKeyUp);
+        window.addEventListener('touchstart', onKeyDown);
+        window.addEventListener('touchend', onKeyUp);
 
         window.addEventListener('load', start);
 
@@ -156,14 +158,14 @@
         // SPELER HANDELINGEN
 
         function onKeyDown(event) {
-            if (event.keyCode === SPATIEBALK_CODE) {
-                spatiebalkIsIngedrukt = true
+            if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
+                spatiebalkIsIngedrukt = true;
             }
         }
 
         function onKeyUp(event) {
-            if (event.keyCode === SPATIEBALK_CODE) {
-                spatiebalkIsIngedrukt = false
+            if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
+                spatiebalkIsIngedrukt = false;
             }
         }
 
