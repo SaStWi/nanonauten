@@ -1,352 +1,439 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Nanonauten in actie</title>
-</head>
+  </head>
 
-<body>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    } /* to remove the top and left whitespace */
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    } /* just to be sure these are full screen*/
+
+    canvas {
+      display: block;
+    } /* To remove the scrollbars */
+  </style>
+
+  <body>
     <script>
-        // CONSTANTEN
-        const CANVAS_BREEDTE = 800;
-        const CANVAS_HOOGTE = 600;
-        const NANONAUT_BREEDTE = 181;
-        const NANONAUT_HOOGTE = 229;
-        const GROND_Y = 540;
-        const NANONAUT_Y_VERSNELLING = 1;
-        const SPATIEBALK_CODE = 32;
-        const NANONAUT_SPRONG_SNELHEID = 20;
-        const NANONAUT_X_SNELHEID = 5;
-        const ACHTERGROND_BREEDTE = 1000;
-        const NANONAUT_NR_ANIMATIEFRAMES = 7;
-        const NANONAUT_ANIMATIESENELHEID = 5;
-        const ROBOT_ANIMATIESNELHEID = 3;
-        const ROBOT_NR_ANIMATIEFRAMES = 9;
-        const ROBOT_X_SNELHEID = 4;
-        const ROBOT_BREEDTE = 141;
-        const ROBOT_HOOGTE = 139;
-        const MIN_AFSTAND_TUSSEN_ROBOTS = 400;
-        const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
-        const MAX_ACTIEVE_ROBOTS = 3;
-        const SCHERMSCHUD_RADIUS = 16;
+      // CONSTANTEN
+      const NANONAUT_BREEDTE = 181;
+      const NANONAUT_HOOGTE = 229;
+      const GROND_Y = 540;
+      const NANONAUT_Y_VERSNELLING = 1;
+      const SPATIEBALK_CODE = 32;
+      const NANONAUT_SPRONG_SNELHEID = 20;
+      const NANONAUT_X_SNELHEID = 5;
+      const ACHTERGROND_BREEDTE = 1000;
+      const NANONAUT_NR_ANIMATIEFRAMES = 7;
+      const NANONAUT_ANIMATIESENELHEID = 5;
+      const ROBOT_ANIMATIESNELHEID = 3;
+      const ROBOT_NR_ANIMATIEFRAMES = 9;
+      const ROBOT_X_SNELHEID = 4;
+      const ROBOT_BREEDTE = 141;
+      const ROBOT_HOOGTE = 139;
+      const MIN_AFSTAND_TUSSEN_ROBOTS = 400;
+      const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
+      const MAX_ACTIEVE_ROBOTS = 3;
+      const SCHERMSCHUD_RADIUS = 16;
 
-        const fps = 60;
-        const msPerFrame = 1000 / fps;
+      const fps = 60;
+      const msPerFrame = 1000 / fps;
 
-        // INSTELLINGEN
-        var msPrev = window.performance.now();
-        var canvas = document.createElement('canvas');
-        var c = canvas.getContext('2d');
-        canvas.width = CANVAS_BREEDTE;
-        canvas.height = CANVAS_HOOGTE;
-        document.body.appendChild(canvas);
+      // INSTELLINGEN
+      var msPrev = window.performance.now();
+      var canvasBreedte = window.innerWidth;
+      var canvasHoogte = window.innerHeight;
 
-        var nanonautAfbeelding = new Image();
-        nanonautAfbeelding.src = 'animatedNanonaut.png';
+      var canvas = document.createElement("canvas");
+      var c = canvas.getContext("2d");
+      canvas.width = canvasBreedte;
+      canvas.height = canvasHoogte;
+      document.body.appendChild(canvas);
 
-        var robotAfbeelding = new Image();
-        robotAfbeelding.src = 'animatedRobot.png';
+      var nanonautAfbeelding = new Image();
+      nanonautAfbeelding.src = "animatedNanonaut.png";
 
-        var nanonautSpriteSheet = {
-            nrFramesPerRij: 5,
-            spriteWidth: NANONAUT_BREEDTE,
-            spriteHeight: NANONAUT_HOOGTE,
-            image: nanonautAfbeelding
+      var robotAfbeelding = new Image();
+      robotAfbeelding.src = "animatedRobot.png";
+
+      var nanonautSpriteSheet = {
+        nrFramesPerRij: 5,
+        spriteWidth: NANONAUT_BREEDTE,
+        spriteHeight: NANONAUT_HOOGTE,
+        image: nanonautAfbeelding,
+      };
+      var nanonautBotsingsRechthoek = {
+        xOffset: 60,
+        yOffset: 20,
+        breedte: 50,
+        hoogte: 200,
+      };
+
+      var robotSpriteSheet = {
+        nrFramesPerRij: 3,
+        spriteWidth: ROBOT_BREEDTE,
+        spriteHeight: ROBOT_HOOGTE,
+        image: robotAfbeelding,
+      };
+      var robotBotsingsRechthoek = {
+        xOffset: 50,
+        yOffset: 20,
+        breedte: 50,
+        hoogte: 100,
+      };
+
+      var robots = [];
+
+      var achtergrondafbeelding = new Image();
+      achtergrondafbeelding.src = "background.png";
+
+      var bush1 = new Image();
+      bush1.src = "bush1.png";
+      var bush2 = new Image();
+      bush2.src = "bush2.png";
+
+      var nanonautX = canvasBreedte / 2;
+      var nanonautY = GROND_Y - NANONAUT_HOOGTE;
+
+      var nanonautYSnelheid = 0;
+      var nanonautIsInDeLucht = false;
+
+      var spatiebalkIsIngedrukt = false;
+      var nanonautFrameNr = 0;
+
+      var cameraX = 0;
+      var cameraY = 0;
+
+      var schermSchudden = false;
+
+      var spelFrameTeller = 0;
+
+      var bosjes = genereerBosjes();
+
+      window.addEventListener("keydown", onKeyDown);
+      window.addEventListener("keyup", onKeyUp);
+      window.addEventListener("touchstart", onKeyDown);
+      window.addEventListener("touchend", onKeyUp);
+
+      window.addEventListener("load", start);
+
+      window.addEventListener('resize', resizeCanvas, false);
+
+      function resizeCanvas(){
+        canvasBreedte = window.innerWidth;
+        canvas.width = canvasBreedte;
+        canvasHoogte = window.innerHeight;
+        canvas.height = canvasHoogte;
+      }
+
+      function start() {
+        resizeCanvas();
+        window.requestAnimationFrame(hoofdLus);
+      }
+
+      function genereerBosjes() {
+        var gegenereerdeBosjes = [];
+        var bosjeX = 0;
+        while (bosjeX < 2 * canvasBreedte) {
+          var bosjeAfbeelding;
+          if (Math.random() >= 0.5) {
+            bosjeAfbeelding = bush1;
+          } else {
+            bosjeAfbeelding = bush2;
+          }
+
+          gegenereerdeBosjes.push({
+            x: bosjeX,
+            y: 80 + Math.random() * 20,
+            image: bosjeAfbeelding,
+          });
+          bosjeX += 150 + Math.random() * 200;
         }
-        var nanonautBotsingsRechthoek = {
-            xOffset: 60,
-            yOffset: 20,
-            breedte: 50,
-            hoogte: 200
-        }
+        return gegenereerdeBosjes;
+      }
 
-        var robotSpriteSheet = {
-            nrFramesPerRij: 3,
-            spriteWidth: ROBOT_BREEDTE,
-            spriteHeight: ROBOT_HOOGTE,
-            image: robotAfbeelding
-        }
-        var robotBotsingsRechthoek = {
-            xOffset: 50,
-            yOffset: 20,
-            breedte: 50,
-            hoogte: 100
-        }
-
-        var robots = []
-
-
-        var achtergrondafbeelding = new Image();
-        achtergrondafbeelding.src = 'background.png';
-
-        var bush1 = new Image();
-        bush1.src = 'bush1.png';
-        var bush2 = new Image();
-        bush2.src = 'bush2.png';
-
-        var nanonautX = CANVAS_BREEDTE / 2;
-        var nanonautY = GROND_Y - NANONAUT_HOOGTE;
-
-        var nanonautYSnelheid = 0;
-        var nanonautIsInDeLucht = false
-
-        var spatiebalkIsIngedrukt = false;
-        var nanonautFrameNr = 0
-
-        var cameraX = 0;
-        var cameraY = 0;
-
-        var schermSchudden = false;
-
-        var spelFrameTeller = 0;
-
-        var bosjes = genereerBosjes();
-
-        window.addEventListener('keydown', onKeyDown);
-        window.addEventListener('keyup', onKeyUp);
-        window.addEventListener('touchstart', onKeyDown);
-        window.addEventListener('touchend', onKeyUp);
-
-        window.addEventListener('load', start);
-
-        function start() {
-            window.requestAnimationFrame(hoofdLus);
-        }
-
-        function genereerBosjes() {
-            var gegenereerdeBosjes = [];
-            var bosjeX = 0
-            while (bosjeX < (2 * CANVAS_BREEDTE)) {
-                var bosjeAfbeelding;
-                if (Math.random() >= 0.5) {
-                    bosjeAfbeelding = bush1;
-                } else {
-                    bosjeAfbeelding = bush2;
-                }
-
-                gegenereerdeBosjes.push({
-                    x: bosjeX,
-                    y: 80 + Math.random() * 20,
-                    image: bosjeAfbeelding
-                });
-                bosjeX += 150 + Math.random() * 200;
-            }
-            return gegenereerdeBosjes;
-        }
-
-        // HOOFD-LUS
-        function hoofdLus() {
-            // check of updates uitgevoerd mogen worden compenserend voor snelle screenrates
-            const msNow = window.performance.now();
-            const msPassed = msNow - msPrev;
-            // als msPerFrame kleiner dan gewenste screenrate
-            if (msPassed < msPerFrame){
-                window.requestAnimationFrame(hoofdLus);
-                // voer de updates niet uit
-                return
-            }
-
-            // werk msPrev bij
-            const excessTime = msPassed % msPerFrame;
-            msPrev = msNow - excessTime
-
-            update();
-            draw();
-            window.requestAnimationFrame(hoofdLus);
-        }
-
-        // SPELER HANDELINGEN
-
-        function onKeyDown(event) {
-            if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
-                spatiebalkIsIngedrukt = true;
-            }
+      // HOOFD-LUS
+      function hoofdLus() {
+        // check of updates uitgevoerd mogen worden compenserend voor snelle screenrates
+        const msNow = window.performance.now();
+        const msPassed = msNow - msPrev;
+        // als msPerFrame kleiner dan gewenste screenrate
+        if (msPassed < msPerFrame) {
+          window.requestAnimationFrame(hoofdLus);
+          // voer de updates niet uit
+          return;
         }
 
-        function onKeyUp(event) {
-            if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
-                spatiebalkIsIngedrukt = false;
-            }
+        // werk msPrev bij
+        const excessTime = msPassed % msPerFrame;
+        msPrev = msNow - excessTime;
+
+        update();
+        draw();
+        window.requestAnimationFrame(hoofdLus);
+      }
+
+      // SPELER HANDELINGEN
+
+      function onKeyDown(event) {
+        if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
+          spatiebalkIsIngedrukt = true;
+        }
+      }
+
+      function onKeyUp(event) {
+        if (event.keyCode === SPATIEBALK_CODE || event instanceof TouchEvent) {
+          spatiebalkIsIngedrukt = false;
+        }
+      }
+
+      // UPDATEN
+      function update() {
+        spelFrameTeller = spelFrameTeller + 1;
+
+        if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht) {
+          // Springen!
+          nanonautYSnelheid = -NANONAUT_SPRONG_SNELHEID;
+          nanonautIsInDeLucht = true;
         }
 
-        // UPDATEN
-        function update() {
+        nanonautX = nanonautX + NANONAUT_X_SNELHEID;
+        nanonautY = nanonautY + nanonautYSnelheid;
+        nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
 
-            spelFrameTeller = spelFrameTeller + 1
-
-            if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht) {
-                // Springen!
-                nanonautYSnelheid = -NANONAUT_SPRONG_SNELHEID
-                nanonautIsInDeLucht = true
-            }
-
-            nanonautX = nanonautX + NANONAUT_X_SNELHEID;
-            nanonautY = nanonautY + nanonautYSnelheid;
-            nanonautYSnelheid = nanonautYSnelheid + NANONAUT_Y_VERSNELLING;
-
-            // Update de nanonaut animatie
-            if ((spelFrameTeller % NANONAUT_ANIMATIESENELHEID) === 0) {
-                nanonautFrameNr = nanonautFrameNr + 1;
-                if (nanonautFrameNr >= NANONAUT_NR_ANIMATIEFRAMES) {
-                    nanonautFrameNr = 0;
-                }
-            }
-
-            // Update de robots
-            schermSchudden = false;
-            var nanonautBotsteOpEenRobot = updateRobots();
-            if(nanonautBotsteOpEenRobot){
-                schermSchudden = true;
-            }
-
-
-            // Update de camera
-            cameraX = nanonautX - 150;
-
-            if (nanonautY > (GROND_Y - NANONAUT_HOOGTE)) {
-                nanonautY = GROND_Y - NANONAUT_HOOGTE;
-                nanonautYSnelheid = 0;
-                nanonautIsInDeLucht = false
-            }
-
-            // Update de bosjes
-            bosjes.forEach(bosje => {
-                if ((bosje.x - cameraX) < -CANVAS_BREEDTE) {
-                    bosje.x += (2 * CANVAS_BREEDTE) + 150;
-                }
-            })
-
+        // Update de nanonaut animatie
+        if (spelFrameTeller % NANONAUT_ANIMATIESENELHEID === 0) {
+          nanonautFrameNr = nanonautFrameNr + 1;
+          if (nanonautFrameNr >= NANONAUT_NR_ANIMATIEFRAMES) {
+            nanonautFrameNr = 0;
+          }
         }
 
-        function updateRobots() {
-
-            robots.forEach(robot => {
-                if ((spelFrameTeller % ROBOT_ANIMATIESNELHEID) === 0) {
-                    robot.frameNr = robot.frameNr + 1;
-                    if (robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES) {
-                        robot.frameNr = 0;
-                    }
-                }
-                robot.x = robot.x - ROBOT_X_SNELHEID;
-            })
-
-            // verwijder robots die uit beeld zijn
-            var robotIndex = 0
-            while (robotIndex < robots.length) {
-                if (robots[robotIndex].x < cameraX - ROBOT_BREEDTE) {
-                    robots.splice(robotIndex, 1);
-                } else {
-                    robotIndex += 1;
-                }
-            }
-
-            // toevoegen robots
-            if (robots.length < MAX_ACTIEVE_ROBOTS) {
-                var laatsteRobotX = CANVAS_BREEDTE;
-                if (robots.length > 0) {
-                    laatsteRobotX = robots[robots.length - 1].x;
-                }
-                var nieuweRobotX = laatsteRobotX + MIN_AFSTAND_TUSSEN_ROBOTS + Math.random() * (MAX_AFSTAND_TUSSEN_ROBOTS - MIN_AFSTAND_TUSSEN_ROBOTS);
-                robots.push({
-                    x: nieuweRobotX,
-                    y: GROND_Y - ROBOT_HOOGTE,
-                    frameNr: 0
-                })
-            }
-
-            // botsing detecteren
-
-            function overlappenNanonautEnRobotOpEenAs(nanonautDichtbij, nanonautVer, robotDichtbij, robotVer) {
-                var nanonautOverlaptRandRobotDichtbij = (nanonautVer >= robotDichtbij) && (nanonautVer <= robotVer);
-                var nanonautOverlaptRandRobotVer = (nanonautDichtbij >= robotDichtbij) && (nanonautDichtbij <= robotVer);
-                var nanonautOverlaptRandRobotHelemaal = (nanonautDichtbij <= robotDichtbij) && (nanonautVer >= robotVer);
-                return nanonautOverlaptRandRobotDichtbij || nanonautOverlaptRandRobotVer || nanonautOverlaptRandRobotHelemaal;
-            }
-
-            function overlappenRobotEnNanonaut(
-                nanonautX, nanonautY, nanonautBreedte, nanonautHoogte,
-                robotX, robotY, robotBreedte, robotHoogte
-            ) {
-                var nanonautOverlaptRobotOpXAs = overlappenNanonautEnRobotOpEenAs(nanonautX, nanonautX + nanonautBreedte, robotX, robotX + robotBreedte);
-                var nanonautOverlaptRobotOpYAs = overlappenNanonautEnRobotOpEenAs(nanonautY, nanonautY + nanonautHoogte, robotY, robotY + robotHoogte);
-                return nanonautOverlaptRobotOpXAs && nanonautOverlaptRobotOpYAs;
-            }
-
-            // Verplaats en animeer ronots en controleer op botsingen met Nanonaut.
-            var nanonautBotsteOpEenRobot = false
-            robots.forEach(robot => {
-                if (overlappenRobotEnNanonaut(
-                    nanonautX + nanonautBotsingsRechthoek.xOffset,
-                    nanonautY + nanonautBotsingsRechthoek.yOffset,
-                    nanonautBotsingsRechthoek.breedte,
-                    nanonautBotsingsRechthoek.hoogte,
-                    robot.x + robotBotsingsRechthoek.xOffset,
-                    robot.y + robotBotsingsRechthoek.yOffset,
-                    robotBotsingsRechthoek.breedte,
-                    robotBotsingsRechthoek.hoogte
-                )) {
-                    nanonautBotsteOpEenRobot = true;
-                }
-            });
-
-            return nanonautBotsteOpEenRobot;
+        // Update de robots
+        schermSchudden = false;
+        var nanonautBotsteOpEenRobot = updateRobots();
+        if (nanonautBotsteOpEenRobot) {
+          schermSchudden = true;
         }
 
-        // TKEKENEN       
-        function draw() {
-            //Laat het sherm schudden indien nodig
-            var schuddendeCameraX = cameraX;
-            var schuddendeCameraY = cameraY;
-            if(schermSchudden) {
-                schuddendeCameraX += (Math.random()-.5)*SCHERMSCHUD_RADIUS;
-                schuddendeCameraY += (Math.random()-.5)*SCHERMSCHUD_RADIUS;
+        // Update de camera
+        cameraX = nanonautX - 150;
+
+        if (nanonautY > GROND_Y - NANONAUT_HOOGTE) {
+          nanonautY = GROND_Y - NANONAUT_HOOGTE;
+          nanonautYSnelheid = 0;
+          nanonautIsInDeLucht = false;
+        }
+
+        // Update de bosjes
+        bosjes.forEach((bosje) => {
+          if (bosje.x - cameraX < -canvasBreedte) {
+            bosje.x += 2 * canvasBreedte + 150;
+          }
+        });
+      }
+
+      function updateRobots() {
+        robots.forEach((robot) => {
+          if (spelFrameTeller % ROBOT_ANIMATIESNELHEID === 0) {
+            robot.frameNr = robot.frameNr + 1;
+            if (robot.frameNr >= ROBOT_NR_ANIMATIEFRAMES) {
+              robot.frameNr = 0;
             }
+          }
+          robot.x = robot.x - ROBOT_X_SNELHEID;
+        });
 
-            // Teken de lucht
-            c.fillStyle = 'LightSkyBlue';
-            c.fillRect(0, 0, CANVAS_BREEDTE, GROND_Y - 40);
-
-            // Teken de achtergrond
-            var achtergrondX = -(schuddendeCameraX % ACHTERGROND_BREEDTE);
-            c.drawImage(achtergrondafbeelding, achtergrondX, -210);
-            c.drawImage(achtergrondafbeelding, achtergrondX + ACHTERGROND_BREEDTE, -210);
-
-
-            // Teken de grond
-            c.fillStyle = 'ForestGreen';
-            c.fillRect(0, GROND_Y - 40, CANVAS_BREEDTE, CANVAS_HOOGTE - GROND_Y + 40);
-
-            // Teken de bosjes
-            bosjes.forEach(bosje => {
-                c.drawImage(bosje.image, bosje.x - schuddendeCameraX, GROND_Y - bosje.y - schuddendeCameraY);
-            });
-
-            // Teken de robots
-            robots.forEach(robot => {
-                tekenGeanimeerdeSprite(robot.x - schuddendeCameraX, robot.y - schuddendeCameraY, robot.frameNr, robotSpriteSheet);
-            })
-
-            // Teken de Nanonaut
-            tekenGeanimeerdeSprite(nanonautX - schuddendeCameraX, nanonautY - schuddendeCameraY, nanonautFrameNr, nanonautSpriteSheet);
+        // verwijder robots die uit beeld zijn
+        var robotIndex = 0;
+        while (robotIndex < robots.length) {
+          if (robots[robotIndex].x < cameraX - ROBOT_BREEDTE) {
+            robots.splice(robotIndex, 1);
+          } else {
+            robotIndex += 1;
+          }
         }
 
-
-        // teken een geanimeerde sprite
-        function tekenGeanimeerdeSprite(schermX, schermY, frameNr, spriteSheet) {
-            var spriteSheetRij = Math.floor(frameNr / spriteSheet.nrFramesPerRij);
-            var spriteSheetKolom = frameNr % spriteSheet.nrFramesPerRij;
-            var spriteSheetX = spriteSheetKolom * spriteSheet.spriteWidth;
-            var spriteSheetY = spriteSheetRij * spriteSheet.spriteHeight;
-            c.drawImage(
-                // de afbeelding
-                spriteSheet.image,
-                // de x en y coordinaten in de afbeelding, met de breedte en hoogte in de afbeelding
-                spriteSheetX, spriteSheetY, spriteSheet.spriteWidth, spriteSheet.spriteHeight,
-                // waar te tekenen op het canvas en met welke breedte en hoogte op de canvas
-                schermX, schermY, spriteSheet.spriteWidth, spriteSheet.spriteHeight
-            );
+        // toevoegen robots
+        if (robots.length < MAX_ACTIEVE_ROBOTS) {
+          var laatsteRobotX = canvasBreedte;
+          if (robots.length > 0) {
+            laatsteRobotX = robots[robots.length - 1].x;
+          }
+          var nieuweRobotX =
+            laatsteRobotX +
+            MIN_AFSTAND_TUSSEN_ROBOTS +
+            Math.random() *
+              (MAX_AFSTAND_TUSSEN_ROBOTS - MIN_AFSTAND_TUSSEN_ROBOTS);
+          robots.push({
+            x: nieuweRobotX,
+            y: GROND_Y - ROBOT_HOOGTE,
+            frameNr: 0,
+          });
         }
+
+        // botsing detecteren
+
+        function overlappenNanonautEnRobotOpEenAs(
+          nanonautDichtbij,
+          nanonautVer,
+          robotDichtbij,
+          robotVer
+        ) {
+          var nanonautOverlaptRandRobotDichtbij =
+            nanonautVer >= robotDichtbij && nanonautVer <= robotVer;
+          var nanonautOverlaptRandRobotVer =
+            nanonautDichtbij >= robotDichtbij && nanonautDichtbij <= robotVer;
+          var nanonautOverlaptRandRobotHelemaal =
+            nanonautDichtbij <= robotDichtbij && nanonautVer >= robotVer;
+          return (
+            nanonautOverlaptRandRobotDichtbij ||
+            nanonautOverlaptRandRobotVer ||
+            nanonautOverlaptRandRobotHelemaal
+          );
+        }
+
+        function overlappenRobotEnNanonaut(
+          nanonautX,
+          nanonautY,
+          nanonautBreedte,
+          nanonautHoogte,
+          robotX,
+          robotY,
+          robotBreedte,
+          robotHoogte
+        ) {
+          var nanonautOverlaptRobotOpXAs = overlappenNanonautEnRobotOpEenAs(
+            nanonautX,
+            nanonautX + nanonautBreedte,
+            robotX,
+            robotX + robotBreedte
+          );
+          var nanonautOverlaptRobotOpYAs = overlappenNanonautEnRobotOpEenAs(
+            nanonautY,
+            nanonautY + nanonautHoogte,
+            robotY,
+            robotY + robotHoogte
+          );
+          return nanonautOverlaptRobotOpXAs && nanonautOverlaptRobotOpYAs;
+        }
+
+        // Verplaats en animeer ronots en controleer op botsingen met Nanonaut.
+        var nanonautBotsteOpEenRobot = false;
+        robots.forEach((robot) => {
+          if (
+            overlappenRobotEnNanonaut(
+              nanonautX + nanonautBotsingsRechthoek.xOffset,
+              nanonautY + nanonautBotsingsRechthoek.yOffset,
+              nanonautBotsingsRechthoek.breedte,
+              nanonautBotsingsRechthoek.hoogte,
+              robot.x + robotBotsingsRechthoek.xOffset,
+              robot.y + robotBotsingsRechthoek.yOffset,
+              robotBotsingsRechthoek.breedte,
+              robotBotsingsRechthoek.hoogte
+            )
+          ) {
+            nanonautBotsteOpEenRobot = true;
+          }
+        });
+
+        return nanonautBotsteOpEenRobot;
+      }
+
+      // TKEKENEN
+      function draw() {
+        //Laat het sherm schudden indien nodig
+        var schuddendeCameraX = cameraX;
+        var schuddendeCameraY = cameraY;
+        if (schermSchudden) {
+          schuddendeCameraX += (Math.random() - 0.5) * SCHERMSCHUD_RADIUS;
+          schuddendeCameraY += (Math.random() - 0.5) * SCHERMSCHUD_RADIUS;
+        }
+
+        // Teken de lucht
+        c.fillStyle = "LightSkyBlue";
+        c.fillRect(0, 0, canvasBreedte, GROND_Y - 40);
+
+        // Teken de achtergrond
+        var achtergrondX = -(schuddendeCameraX % ACHTERGROND_BREEDTE);
+        c.drawImage(achtergrondafbeelding, achtergrondX, -210);
+        c.drawImage(
+          achtergrondafbeelding,
+          achtergrondX + ACHTERGROND_BREEDTE,
+          -210
+        );
+        c.drawImage(
+          achtergrondafbeelding,
+          achtergrondX + ACHTERGROND_BREEDTE * 2,
+          -210
+        );
+
+        // Teken de grond
+        c.fillStyle = "ForestGreen";
+        c.fillRect(
+          0,
+          GROND_Y - 40,
+          canvasBreedte,
+          canvasHoogte - GROND_Y + 40
+        );
+
+        // Teken de bosjes
+        bosjes.forEach((bosje) => {
+          c.drawImage(
+            bosje.image,
+            bosje.x - schuddendeCameraX,
+            GROND_Y - bosje.y - schuddendeCameraY
+          );
+        });
+
+        // Teken de robots
+        robots.forEach((robot) => {
+          tekenGeanimeerdeSprite(
+            robot.x - schuddendeCameraX,
+            robot.y - schuddendeCameraY,
+            robot.frameNr,
+            robotSpriteSheet
+          );
+        });
+
+        // Teken de Nanonaut
+        tekenGeanimeerdeSprite(
+          nanonautX - schuddendeCameraX,
+          nanonautY - schuddendeCameraY,
+          nanonautFrameNr,
+          nanonautSpriteSheet
+        );
+      }
+
+      // teken een geanimeerde sprite
+      function tekenGeanimeerdeSprite(schermX, schermY, frameNr, spriteSheet) {
+        var spriteSheetRij = Math.floor(frameNr / spriteSheet.nrFramesPerRij);
+        var spriteSheetKolom = frameNr % spriteSheet.nrFramesPerRij;
+        var spriteSheetX = spriteSheetKolom * spriteSheet.spriteWidth;
+        var spriteSheetY = spriteSheetRij * spriteSheet.spriteHeight;
+        c.drawImage(
+          // de afbeelding
+          spriteSheet.image,
+          // de x en y coordinaten in de afbeelding, met de breedte en hoogte in de afbeelding
+          spriteSheetX,
+          spriteSheetY,
+          spriteSheet.spriteWidth,
+          spriteSheet.spriteHeight,
+          // waar te tekenen op het canvas en met welke breedte en hoogte op de canvas
+          schermX,
+          schermY,
+          spriteSheet.spriteWidth,
+          spriteSheet.spriteHeight
+        );
+      }
     </script>
-</body>
-
+  </body>
 </html>
