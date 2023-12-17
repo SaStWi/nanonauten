@@ -28,6 +28,7 @@
         const MIN_AFSTAND_TUSSEN_ROBOTS = 400;
         const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
         const MAX_ACTIEVE_ROBOTS = 3;
+        const SCHERMSCHUD_RADIUS = 16;
 
         const fps = 60;
         const msPerFrame = 1000 / fps;
@@ -94,6 +95,8 @@
 
         var cameraX = 0;
         var cameraY = 0;
+
+        var schermSchudden = false;
 
         var spelFrameTeller = 0;
 
@@ -188,7 +191,11 @@
             }
 
             // Update de robots
-            updateRobots();
+            schermSchudden = false;
+            var nanonautBotsteOpEenRobot = updateRobots();
+            if(nanonautBotsteOpEenRobot){
+                schermSchudden = true;
+            }
 
 
             // Update de camera
@@ -263,6 +270,8 @@
                 return nanonautOverlaptRobotOpXAs && nanonautOverlaptRobotOpYAs;
             }
 
+            // Verplaats en animeer ronots en controleer op botsingen met Nanonaut.
+            var nanonautBotsteOpEenRobot = false
             robots.forEach(robot => {
                 if (overlappenRobotEnNanonaut(
                     nanonautX + nanonautBotsingsRechthoek.xOffset,
@@ -274,20 +283,29 @@
                     robotBotsingsRechthoek.breedte,
                     robotBotsingsRechthoek.hoogte
                 )) {
-                    console.log('AUW!')
+                    nanonautBotsteOpEenRobot = true;
                 }
-            })
+            });
 
+            return nanonautBotsteOpEenRobot;
         }
 
         // TKEKENEN       
         function draw() {
+            //Laat het sherm schudden indien nodig
+            var schuddendeCameraX = cameraX;
+            var schuddendeCameraY = cameraY;
+            if(schermSchudden) {
+                schuddendeCameraX += (Math.random()-.5)*SCHERMSCHUD_RADIUS;
+                schuddendeCameraY += (Math.random()-.5)*SCHERMSCHUD_RADIUS;
+            }
+
             // Teken de lucht
             c.fillStyle = 'LightSkyBlue';
             c.fillRect(0, 0, CANVAS_BREEDTE, GROND_Y - 40);
 
             // Teken de achtergrond
-            var achtergrondX = -(cameraX % ACHTERGROND_BREEDTE);
+            var achtergrondX = -(schuddendeCameraX % ACHTERGROND_BREEDTE);
             c.drawImage(achtergrondafbeelding, achtergrondX, -210);
             c.drawImage(achtergrondafbeelding, achtergrondX + ACHTERGROND_BREEDTE, -210);
 
@@ -298,16 +316,16 @@
 
             // Teken de bosjes
             bosjes.forEach(bosje => {
-                c.drawImage(bosje.image, bosje.x - cameraX, GROND_Y - bosje.y - cameraY);
+                c.drawImage(bosje.image, bosje.x - schuddendeCameraX, GROND_Y - bosje.y - schuddendeCameraY);
             });
 
             // Teken de robots
             robots.forEach(robot => {
-                tekenGeanimeerdeSprite(robot.x - cameraX, robot.y - cameraY, robot.frameNr, robotSpriteSheet);
+                tekenGeanimeerdeSprite(robot.x - schuddendeCameraX, robot.y - schuddendeCameraY, robot.frameNr, robotSpriteSheet);
             })
 
             // Teken de Nanonaut
-            tekenGeanimeerdeSprite(nanonautX - cameraX, nanonautY - cameraY, nanonautFrameNr, nanonautSpriteSheet);
+            tekenGeanimeerdeSprite(nanonautX - schuddendeCameraX, nanonautY - schuddendeCameraY, nanonautFrameNr, nanonautSpriteSheet);
         }
 
 
