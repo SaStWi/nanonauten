@@ -426,6 +426,12 @@
           nanonautSpriteSheet
         );
 
+        // Laat Score zien
+        var nanonautAfstand = nanonautX / 100;
+        c.fillStyle = 'black';
+        c.font = '48px sans-serif';
+        c.fillText(nanonautAfstand.toFixed(0)+'m', 20, 40); 
+
         // Teken de Levensbalk
         c.fillStyle = "red";
         c.fillRect(
