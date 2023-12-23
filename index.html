@@ -43,6 +43,7 @@
       const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
       const MAX_ACTIEVE_ROBOTS = 3;
       const SCHERMSCHUD_RADIUS = 16;
+      const NANONAUT_MAX_GEZONDHEID = 100
 
       const fps = 60;
       const msPerFrame = 1000 / fps;
@@ -108,6 +109,7 @@
 
       var spatiebalkIsIngedrukt = false;
       var nanonautFrameNr = 0;
+      var nanonautGezondheid = NANONAUT_MAX_GEZONDHEID;
 
       var cameraX = 0;
       var cameraY = 0;
@@ -222,6 +224,9 @@
         var nanonautBotsteOpEenRobot = updateRobots();
         if (nanonautBotsteOpEenRobot) {
           schermSchudden = true;
+          if(nanonautGezondheid>0){
+            nanonautGezondheid -= 1;
+          }
         }
 
         // Update de camera
@@ -411,6 +416,12 @@
           nanonautFrameNr,
           nanonautSpriteSheet
         );
+
+        // Teken de Levensbalk
+        c.fillStyle = 'red';
+        c.fillRect(canvasBreedte-380-10, 10, nanonautGezondheid/NANONAUT_MAX_GEZONDHEID*380, 20);
+        c.strokeStyle = 'red';
+        c.strokeRect(canvasBreedte-380-10, 10, 380, 20);
       }
 
       // teken een geanimeerde sprite
