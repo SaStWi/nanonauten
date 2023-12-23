@@ -43,10 +43,13 @@
       const MAX_AFSTAND_TUSSEN_ROBOTS = 1200;
       const MAX_ACTIEVE_ROBOTS = 3;
       const SCHERMSCHUD_RADIUS = 16;
-      const NANONAUT_MAX_GEZONDHEID = 100
+      const NANONAUT_MAX_GEZONDHEID = 100;
 
       const fps = 60;
       const msPerFrame = 1000 / fps;
+      // Spel MODI
+      const SPEEL_SPELMODUS = 0;
+      const GAME_OVER_SPELMODUS = 1;
 
       // INSTELLINGEN
       var msPrev = window.performance.now();
@@ -117,6 +120,7 @@
       var schermSchudden = false;
 
       var spelFrameTeller = 0;
+      var spelModus = SPEEL_SPELMODUS;
 
       var bosjes = genereerBosjes();
 
@@ -127,9 +131,9 @@
 
       window.addEventListener("load", start);
 
-      window.addEventListener('resize', resizeCanvas, false);
+      window.addEventListener("resize", resizeCanvas, false);
 
-      function resizeCanvas(){
+      function resizeCanvas() {
         canvasBreedte = window.innerWidth;
         canvas.width = canvasBreedte;
         canvasHoogte = window.innerHeight;
@@ -199,6 +203,11 @@
 
       // UPDATEN
       function update() {
+
+        if(spelModus != SPEEL_SPELMODUS) {
+          return;
+        }
+
         spelFrameTeller = spelFrameTeller + 1;
 
         if (spatiebalkIsIngedrukt && !nanonautIsInDeLucht) {
@@ -224,9 +233,14 @@
         var nanonautBotsteOpEenRobot = updateRobots();
         if (nanonautBotsteOpEenRobot) {
           schermSchudden = true;
-          if(nanonautGezondheid>0){
+          if (nanonautGezondheid > 0) {
             nanonautGezondheid -= 1;
           }
+        }
+
+        if(nanonautGezondheid <= 0) {
+          spelModus = GAME_OVER_SPELMODUS;
+          // schermSchudden = false;
         }
 
         // Update de camera
@@ -383,12 +397,7 @@
 
         // Teken de grond
         c.fillStyle = "ForestGreen";
-        c.fillRect(
-          0,
-          GROND_Y - 40,
-          canvasBreedte,
-          canvasHoogte - GROND_Y + 40
-        );
+        c.fillRect(0, GROND_Y - 40, canvasBreedte, canvasHoogte - GROND_Y + 40);
 
         // Teken de bosjes
         bosjes.forEach((bosje) => {
@@ -418,10 +427,22 @@
         );
 
         // Teken de Levensbalk
-        c.fillStyle = 'red';
-        c.fillRect(canvasBreedte-380-10, 10, nanonautGezondheid/NANONAUT_MAX_GEZONDHEID*380, 20);
-        c.strokeStyle = 'red';
-        c.strokeRect(canvasBreedte-380-10, 10, 380, 20);
+        c.fillStyle = "red";
+        c.fillRect(
+          canvasBreedte - 380 - 10,
+          10,
+          (nanonautGezondheid / NANONAUT_MAX_GEZONDHEID) * 380,
+          20
+        );
+        c.strokeStyle = "red";
+        c.strokeRect(canvasBreedte - 380 - 10, 10, 380, 20);
+
+        // Laat GAME OVER zien als het spel klaar is
+        if (spelModus == GAME_OVER_SPELMODUS){
+          c.fillStyle = 'red' ;
+          c.font = '96px sans-serif';
+          c.fillText('GAME_OVER', (canvasBreedte-560)/2  , 300);
+        }
       }
 
       // teken een geanimeerde sprite
